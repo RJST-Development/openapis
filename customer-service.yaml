@@ -1,0 +1,467 @@
+openapi: 3.1.0
+info:
+  title: Customer Service API
+  description: Provides customer data and operations.
+  version: v1
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+paths:
+  /customers:
+    get:
+      tags:
+      - customer-controller
+      summary: Returns all customers
+      description: Provides a list of all customers stored in the system
+      operationId: getCustomers
+      responses:
+        "200":
+          description: List was successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerDto"
+              examples:
+                Example customer list:
+                  description: Example customer list
+                  value:
+                  - id: 1
+                    firstName: string
+                    lastName: string
+                    birthDate: 2025-04-05
+                    email: string
+        "500":
+          description: Internal server error
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerDto"
+    put:
+      tags:
+      - customer-controller
+      summary: Updates an existing customer
+      description: Updates the data of an existing customer in the system
+      operationId: updateCustomer
+      requestBody:
+        description: The updated data of the customer
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerDto"
+            examples:
+              updateCustomer:
+                description: updateCustomer
+                value:
+                  id: 1
+                  firstName: string
+                  lastName: string
+                  birthDate: 2025-04-05
+                  email: string
+              customerNotFound:
+                description: customerNotFound
+                value:
+                  id: 999999999
+                  firstName: string
+                  lastName: string
+                  birthDate: 2025-04-05
+                  email: string
+              invalidFirstName:
+                description: invalidFirstName
+                value:
+                  id: 1
+                  firstName: ""
+                  lastName: Mustermann
+                  birthDate: 2025-04-05
+                  email: null
+              invalidLastName:
+                description: invalidLastName
+                value:
+                  id: 1
+                  firstName: string
+                  lastName: ""
+                  birthDate: 2025-04-05
+                  email: null
+              invalidBirthDate:
+                description: invalidBirthDate
+                value:
+                  id: 1
+                  firstName: string
+                  lastName: string
+                  birthDate: ""
+                  email: null
+        required: true
+      responses:
+        "200":
+          description: Customer successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+              examples:
+                updateCustomer:
+                  description: updateCustomer
+                  value: |
+                    {
+                      "id": {{ request.body/id }},
+                      "firstName": "{{ request.body/firstName }}",
+                      "lastName": "{{ request.body/lastName }}",
+                      "birthDate": "{{ request.body/birthDate }}",
+                      "email": "{{ request.body/email }}"
+                    }
+        "400":
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                invalidFirstName:
+                  description: invalidFirstName
+                  value:
+                    message: Validierungsfehler
+                    errors:
+                      firstName: firstName darf nicht leer sein
+                invalidLastName:
+                  description: invalidLastName
+                  value:
+                    message: Validierungsfehler
+                    errors:
+                      lastName: lastName darf nicht leer sein
+                invalidBirthDate:
+                  description: invalidBirthDate
+                  value:
+                    message: Validierungsfehler
+                    errors:
+                      virthdate: Birthdate darf nicht leer sein
+        "404":
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultErrorResponse"
+              examples:
+                customerNotFound:
+                  description: customerNotFound
+                  value:
+                    timestamp: 2025-05-12T19:40:47.682+00:00
+                    status: 404
+                    error: Not Found
+                    message: Customer not found
+                    path: /customers/9999999999
+      x-microcks-operation:
+        delay: "25"
+        dispatcherRules: |
+          def result = "updateCustomer";
+
+          def customer = new groovy.json.JsonSlurper().parseText(mockRequest.requestContent);
+          if (customer.id == null || customer.id == 999999999) {
+            result = "customerNotFound";
+          }
+
+          if (customer.firstName == null || customer.firstName.trim() == "") {
+            result = "invalidFirstName";
+          }
+
+          if (customer.lastName == null || customer.lastName.trim() == "") {
+            result = "invalidLastName";
+          }
+
+          if (customer.birthDate == null || customer.birthDate.trim() == "") {
+            result = "invalidBirthDate";
+          }
+
+          return result;
+        dispatcher: SCRIPT
+    post:
+      tags:
+      - customer-controller
+      summary: Creates a new customer
+      description: Creates a new customer in the system
+      operationId: createCustomer
+      requestBody:
+        description: The data of the customer to be created
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerDto"
+            examples:
+              createCustomer:
+                description: createCustomer
+                value:
+                  firstName: Max
+                  lastName: Mustermann
+                  birthDate: 2025-04-05
+                  email: max.mustermann@web.de
+              invalidFirstName:
+                description: invalidFirstName
+                value:
+                  firstName: ""
+                  lastName: Mustermann
+                  birthDate: 2025-04-05
+                  email: null
+              invalidLastName:
+                description: invalidLastName
+                value:
+                  firstName: string
+                  lastName: ""
+                  birthDate: 2025-04-05
+                  email: null
+              invalidBirthDate:
+                description: invalidBirthDate
+                value:
+                  firstName: string
+                  lastName: string
+                  birthDate: ""
+                  email: null
+        required: true
+      responses:
+        "201":
+          description: Customer successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+              examples:
+                createCustomer:
+                  description: createCustomer
+                  value:
+                    id: 1
+                    firstName: string
+                    lastName: string
+                    birthDate: 2025-04-05
+                    email: string
+        "400":
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+              examples:
+                invalidFirstName:
+                  description: Firstname is invalid
+                  value:
+                    message: Validierungsfehler
+                    errors:
+                      firstName: firstName darf nicht leer sein
+                invalidLastName:
+                  description: Lastname is invalid
+                  value:
+                    message: Validierungsfehler
+                    errors:
+                      lastName: lastName darf nicht leer sein
+                invalidBirthDate:
+                  description: Birthdate is invalid
+                  value:
+                    message: Validierungsfehler
+                    errors:
+                      virthdate: Birthdate darf nicht leer sein
+        "500":
+          description: Internal Server Error
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+      x-microcks-operation:
+        delay: "25"
+        dispatcherRules: |
+          def result = "createCustomer";
+
+          def customer = new groovy.json.JsonSlurper().parseText(mockRequest.requestContent);
+          if (customer.firstName == null || customer.firstName.trim() == "") {
+            result = "invalidFirstName";
+          }
+
+          if (customer.lastName == null || customer.lastName.trim() == "") {
+            result = "invalidLastName";
+          }
+
+          if (customer.birthDate == null || customer.birthDate.trim() == "") {
+            result = "invalidBirthDate";
+          }
+
+          return result;
+        dispatcher: SCRIPT
+  /customers/{id}:
+    get:
+      tags:
+      - customer-controller
+      summary: Retrieves a customer
+      operationId: getCustomerById
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the customer
+        required: true
+        schema:
+          type: integer
+          format: int64
+        examples:
+          getCustomerById:
+            description: getCustomerById
+            value: 1
+          customerNotFound:
+            description: customerNotFound
+            value: 9999999999
+      responses:
+        "200":
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+              examples:
+                getCustomerById:
+                  description: getCustomerById
+                  value:
+                    id: 1
+                    firstName: string
+                    lastName: string
+                    birthDate: 2025-04-05
+                    email: string
+        "404":
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DefaultErrorResponse"
+              examples:
+                customerNotFound:
+                  description: customerNotFound
+                  value:
+                    timestamp: 2025-05-12T19:40:47.682+00:00
+                    status: 404
+                    error: Not Found
+                    message: Customer not found
+                    path: /customers/9999999999
+        "500":
+          description: Internal Server Error
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerDto"
+    delete:
+      tags:
+      - customer-controller
+      summary: Deletes an existing customer
+      description: Deletes an existing customer from the system
+      operationId: deleteCustomer
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the customer to be deleted
+        required: true
+        schema:
+          type: integer
+          format: int64
+        examples:
+          customerAlreadyDeleted:
+            description: customerAlreadyDeleted
+            value: 9999999999
+          deleteCustomer:
+            description: deleteCustomer
+            value: 1
+      responses:
+        "204":
+          description: Customer successfully deleted
+          content:
+            application/json:
+              examples:
+                deleteCustomer:
+                  description: deleteCustomer
+                customerAlreadyDeleted:
+                  description: customerAlreadyDeleted
+        "500":
+          description: Internal Server Error
+          content:
+            '*/*':
+              schema:
+                type: object
+components:
+  schemas:
+    ValidationErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Validation errors
+      required:
+        - errors
+        - message
+    CustomerDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The ID of the customer
+        firstName:
+          type: string
+          description: The first name of the customer
+          minLength: 1
+        lastName:
+          type: string
+          description: The last name of the customer
+          minLength: 1
+        birthDate:
+          type: string
+          format: date
+          description: The birth date of the customer
+        email:
+          type: string
+          description: The email of the customer
+      required:
+      - birthDate
+      - firstName
+      - id
+      - lastName
+    DefaultErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the error
+        status:
+          type: integer
+          format: int32
+          description: HttpStatusCode
+        error:
+          type: string
+          description: HttpText
+        message:
+          type: string
+          description: Reason for ErrorCode
+        path:
+          type: string
+          description: Path
+      required:
+        - error
+        - message
+        - path
+        - status
+        - timestamp
+    CreateCustomerDto:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        birthDate:
+          type: string
+          format: date
+        email:
+          type: string
+      required:
+      - birthDate
